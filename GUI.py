@@ -19,10 +19,10 @@ class ImageHelperGUI(tk.Tk):
         super().__init__()
         
         self.title('图片分类助手')
-        # self.geometry("800x600")
+        self.geometry("800x640")
         
         # 默认分类
-        self.categories = ['色图', '表情包', '美女', '待删除']
+        self.categories = ['色图', '表情包', '美图', '待删除']
         # 源文件列表
         self.filelist = None
         # 当前图片的名字
@@ -49,13 +49,14 @@ class ImageHelperGUI(tk.Tk):
         # 显示图片，打开初始图片并显示
         img_open = Image.open('confirm.png')
         self.img_png = ImageTk.PhotoImage(img_open)
-        self.label_img = tk.Label(self, image=self.img_png, width=300, height=400)
-        self.label_img.grid(row=1, column=0, columnspan=4)
+        self.label_img = tk.Label(self, image=self.img_png, width=540, height=540)
+        self.label_img.grid(row=1, column=0, columnspan=4, ipadx=30)
         self.label_img.bind("<Button-1>", self.set_focus_to_window)
 
         # 分类栏容器
-        self.right_frame = tk.Frame(self, width=200, height=400)
-        self.right_frame.grid(row=1, column=5)
+        self.right_frame = tk.Frame(self, width=200, height=540)
+        self.right_frame.grid_propagate(0)
+        self.right_frame.grid(row=1, column=5, ipady=30)
 
     def set_focus_to_window(self, me):
         self.label_img.focus_set()
@@ -63,10 +64,10 @@ class ImageHelperGUI(tk.Tk):
     def setupCategoriesUI(self):
         '''构建分类栏的UI界面以及用户操作'''
         
-        
         # 分类容器
-        self.category_canvas = tk.Canvas(self.right_frame)
-        self.category_frame = tk.Frame(self.category_canvas)
+        self.category_canvas = tk.Canvas(self.right_frame, width=200, height=500)
+        self.category_frame = tk.Frame(self.category_canvas, width=200, height=500)
+        self.category_frame.pack_propagate(0)
         
         # 滚动条
         self.scrollbar = tk.Scrollbar(self.category_canvas, orient="vertical", command=self.category_canvas.yview)
@@ -74,7 +75,7 @@ class ImageHelperGUI(tk.Tk):
         
         # 创建分类列表
         for i, category in enumerate(self.categories):
-            category_label = tk.Label(self.category_frame, text="{}\t{}".format(i+1, category), pady=10)
+            category_label = tk.Label(self.category_frame, text="{}\t{}".format(i+1, category), pady=10, justify='left')
             category_label.bind("<Button-1>", self.category_clicked)
             category_label.pack(side=tk.TOP, fill=tk.X)
         
@@ -82,11 +83,9 @@ class ImageHelperGUI(tk.Tk):
         self.category_create = tk.Button(self.right_frame, text="添加分类", command=self.add_category)
         
         # 布局
-        self.category_canvas.pack(fill=tk.X)
-        self.category_frame.pack(fill=tk.X)
-        self.category_create.pack(side=tk.BOTTOM, fill=tk.X)
-
-        
+        self.category_canvas.pack()
+        self.category_frame.pack()
+        self.category_create.pack(side=tk.BOTTOM)
 
         # 绑定键盘按键事件
         self.bind("<Key>", self.key_pressed)
@@ -98,7 +97,10 @@ class ImageHelperGUI(tk.Tk):
         if len(category) > 0:
             self.categories.append(category)
             
-            new_category = tk.Label(self.category_frame, text="{}\t{}".format(len(self.categories), category), pady=10)
+            new_category = tk.Label(self.category_frame, text="{}\t{}".format(len(self.categories), category), justify='left', pady=10)
+            
+            if not os.path.exists(os.path.join(self.dest_dir, category)):
+                os.mkdir(os.path.join(self.dest_dir, category))
 
             new_category.bind("<Button-1>", self.category_clicked)
             new_category.pack(side=tk.TOP, fill=tk.X)
@@ -125,7 +127,7 @@ class ImageHelperGUI(tk.Tk):
             for widget in self.category_frame.winfo_children():
                 widget.destroy()
             for i, category in enumerate(self.categories):
-                category_label = tk.Label(self.category_frame, text="{}\t{}".format(i+1, category), pady=10)
+                category_label = tk.Label(self.category_frame, text="{}\t{}".format(i+1, category), pady=10, justify='left')
                 category_label.bind("<Button-1>", self.category_clicked)
                 category_label.pack(side=tk.TOP, fill=tk.X)            
             
@@ -164,16 +166,19 @@ class ImageHelperGUI(tk.Tk):
             self.change_img(os.path.join(self.source_dir, self.current_filename))
             
             if not os.path.exists(self.dest_dir):
-                a = msg.askokcancel('提示', '目标路径不存在，是否在当前路径下创建？')
+                a = msg.askokcancel('提示', '目标路径不存在，是否创建？')
                 if a:
-                    # 在当前路径下创建
+                    # 创建
                     os.mkdir(self.dest_dir)
                 else:
                     # 重新输入路径
                     return
             if msg.askyesno("确认", "是否使用默认分类？"):
+                # 使用默认分类
                 for category in self.categories:
-                    os.mkdir(os.path.join(self.dest_dir, category))
+                    # 如果存在，跳过，否则，创建文件夹
+                    if not os.path.exists(os.path.join(self.dest_dir, category)):
+                        os.mkdir(os.path.join(self.dest_dir, category))
             elif msg.askyesno("确认", "是否使用目标分类？"):
                 self.categories = []
                 for f in os.listdir(self.dest_dir):
@@ -198,13 +203,13 @@ class ImageHelperGUI(tk.Tk):
         w, h = img_open.size
         
         # 调整图片大小
-        f1 = 300 / w
-        f2 = 400 / h  
+        f1 = 600 / w
+        f2 = 800 / h  
         factor = min([f1, f2])  
     
         width = int(w*factor)  
         height = int(h*factor)  
-        img_open = img_open.resize((width, height), Image.ANTIALIAS)   
+        img_open = img_open.resize((width, height), Image.BILINEAR)   
         
         # 更换图片
         self.img_png = ImageTk.PhotoImage(img_open)
