@@ -1,5 +1,5 @@
 # coding:utf-8
-# auth: wendynail98@outlook.com
+# Author: wendynail98@outlook.com
 
 import os
 import shutil
